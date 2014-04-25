@@ -2,11 +2,11 @@ from setuptools import setup
 
 setup(
     name='sphinxapi',
-    version='0.9.9',
+    version='2.1.7-release',
     description='Client for the Sphinx search engine.',
     long_description=open('README.rst').read(),
     author='Sphinx Technologies Inc',
-    url='http://github.com/jsocol/sphinxapi',
+    url='http://github.com/Romamo/sphinxapi',
     license='GPL',
     packages=('sphinxapi',),
     include_package_data=True,
