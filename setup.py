@@ -3,8 +3,8 @@ from setuptools import setup
 setup(
     name='sphinxapi',
     version='2.1.7-release',
-    description='Client for the Sphinx search engine.',
-    long_description=open('README.rst').read(),
+    description='Sphinx search official client',
+    long_description=open('README.md').read(),
     author='Sphinx Technologies Inc',
     url='http://github.com/Romamo/sphinxapi',
     license='GPL',
