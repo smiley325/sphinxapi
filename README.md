@@ -4,11 +4,17 @@
 pip install https://github.com/Romamo/sphinxapi/zipball/master
 ```
 
+## Using
+
+```sh
+import sphinxapi
+```
+
 ## Current version
 
-Sphinx 2.1.7-release (rel21-r4638)
-sphinxapi.py 4505 2014-01-22 15:16:21Z
+* Sphinx 2.1.7-release
+* sphinxapi.py 4505 2014-01-22 15:16:21Z
 
 ## Documentation
 
-See `the docs <http://sphinxsearch.com/docs/>`_.
+[On the website](http://sphinxsearch.com/docs/)
