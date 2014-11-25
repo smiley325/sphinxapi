@@ -88,8 +88,8 @@ SPH_ATTR_FLOAT			= 5
 SPH_ATTR_BIGINT			= 6
 SPH_ATTR_STRING			= 7
 SPH_ATTR_FACTORS		= 1001
-SPH_ATTR_MULTI			= 0X40000001L
-SPH_ATTR_MULTI64		= 0X40000002L
+SPH_ATTR_MULTI			= 0X40000001
+SPH_ATTR_MULTI64		= 0X40000002
 
 SPH_ATTR_TYPES = (SPH_ATTR_NONE,
 				  SPH_ATTR_INTEGER,
@@ -229,7 +229,7 @@ class SphinxClient:
 			sock = socket.socket ( af, socket.SOCK_STREAM )
 			sock.settimeout ( self._timeout )
 			sock.connect ( addr )
-		except socket.error, msg:
+		except socket.error as msg:
 			if sock:
 				sock.close()
 			self._error = 'connection to %s failed (%s)' % ( desc, msg )
@@ -319,8 +319,8 @@ class SphinxClient:
 		"""
 		Set offset and count into result set, and optionally set max-matches and cutoff limits.
 		"""
-		assert ( type(offset) in [int,long] and 0<=offset<16777216 )
-		assert ( type(limit) in [int,long] and 0<limit<16777216 )
+		assert ( type(offset) in [int,int] and 0<=offset<16777216 )
+		assert ( type(limit) in [int,int] and 0<limit<16777216 )
 		assert(maxmatches>=0)
 		self._offset = offset
 		self._limit = limit
@@ -381,7 +381,7 @@ class SphinxClient:
 		Bind per-field weights by name; expects (name,field_weight) dictionary as argument.
 		"""
 		assert(isinstance(weights,dict))
-		for key,val in weights.items():
+		for key,val in list(weights.items()):
 			assert(isinstance(key,str))
 			AssertUInt32 ( val )
 		self._fieldweights = weights
@@ -392,7 +392,7 @@ class SphinxClient:
 		Bind per-index weights by name; expects (name,index_weight) dictionary as argument.
 		"""
 		assert(isinstance(weights,dict))
-		for key,val in weights.items():
+		for key,val in list(weights.items()):
 			assert(isinstance(key,str))
 			AssertUInt32(val)
 		self._indexweights = weights
@@ -403,8 +403,8 @@ class SphinxClient:
 		Set IDs range to match.
 		Only match records if document ID is beetwen $min and $max (inclusive).
 		"""
-		assert(isinstance(minid, (int, long)))
-		assert(isinstance(maxid, (int, long)))
+		assert(isinstance(minid, int))
+		assert(isinstance(maxid, int))
 		assert(minid<=maxid)
 		self._min_id = minid
 		self._max_id = maxid
@@ -496,7 +496,7 @@ class SphinxClient:
 		known_names = [ "reverse_scan", "sort_method", "max_predicted_time", "boolean_simplify", "idf" ]
 		flags = { "reverse_scan":[0, 1], "sort_method":["pq", "kbuffer"],"max_predicted_time":[0], "boolean_simplify":[True, False], "idf":["normalized", "plain"] }
 		assert ( name in known_names )
-		assert ( value in flags[name] or ( name=="max_predicted_time" and isinstance(value, (int, long)) and value>=0))
+		assert ( value in flags[name] or ( name=="max_predicted_time" and isinstance(value, int) and value>=0))
 		
 		if name=="reverse_scan":
 			self._query_flags = SetBit ( self._query_flags, 0, value==1 )
@@ -512,8 +512,8 @@ class SphinxClient:
 
 	def SetOuterSelect ( self, orderby, offset, limit ):
 		assert(isinstance(orderby, str))
-		assert(isinstance(offset, (int, long)))
-		assert(isinstance(limit, (int, long)))
+		assert(isinstance(offset, int))
+		assert(isinstance(limit, int))
 		assert ( offset>=0 )
 		assert ( limit>0 )
 
@@ -586,7 +586,7 @@ class SphinxClient:
 		req.append(pack('>L', len(self._sortby)))
 		req.append(self._sortby)
 
-		if isinstance(query,unicode):
+		if isinstance(query,str):
 			query = query.encode('utf-8')
 		assert(isinstance(query,str))
 
@@ -641,7 +641,7 @@ class SphinxClient:
 
 		# per-index weights
 		req.append ( pack ('>L',len(self._indexweights)))
-		for indx,weight in self._indexweights.items():
+		for indx,weight in list(self._indexweights.items()):
 			req.append ( pack ('>L',len(indx)) + indx + pack ('>L',weight))
 
 		# max query time
@@ -649,7 +649,7 @@ class SphinxClient:
 
 		# per-field weights
 		req.append ( pack ('>L',len(self._fieldweights) ) )
-		for field,weight in self._fieldweights.items():
+		for field,weight in list(self._fieldweights.items()):
 			req.append ( pack ('>L',len(field)) + field + pack ('>L',weight) )
 
 		# comment
@@ -658,10 +658,10 @@ class SphinxClient:
 
 		# attribute overrides
 		req.append ( pack('>L', len(self._overrides)) )
-		for v in self._overrides.values():
+		for v in list(self._overrides.values()):
 			req.extend ( ( pack('>L', len(v['name'])), v['name'] ) )
 			req.append ( pack('>LL', v['type'], len(v['values'])) )
-			for id, value in v['values'].iteritems():
+			for id, value in v['values'].items():
 				req.append ( pack('>Q', id) )
 				if v['type'] == SPH_ATTR_FLOAT:
 					req.append ( pack('>f', value) )
@@ -859,7 +859,7 @@ class SphinxClient:
 		"""
 		if not opts:
 			opts = {}
-		if isinstance(words,unicode):
+		if isinstance(words,str):
 			words = words.encode('utf-8')
 
 		assert(isinstance(docs, list))
@@ -934,7 +934,7 @@ class SphinxClient:
 		# documents
 		req.append(pack('>L', len(docs)))
 		for doc in docs:
-			if isinstance(doc,unicode):
+			if isinstance(doc,str):
 				doc = doc.encode('utf-8')
 			assert(isinstance(doc, str))
 			req.append(pack('>L', len(doc)))
@@ -993,7 +993,7 @@ class SphinxClient:
 		assert ( isinstance ( values, dict ) )
 		for attr in attrs:
 			assert ( isinstance ( attr, str ) )
-		for docid, entry in values.items():
+		for docid, entry in list(values.items()):
 			AssertUInt32(docid)
 			assert ( isinstance ( entry, list ) )
 			assert ( len(attrs)==len(entry) )
@@ -1019,7 +1019,7 @@ class SphinxClient:
 			req.append ( pack('>L', mva_attr ) )
 
 		req.append ( pack('>L',len(values)) )
-		for docid, entry in values.items():
+		for docid, entry in list(values.items()):
 			req.append ( pack('>Q',docid) )
 			for val in entry:
 				val_len = val
@@ -1189,11 +1189,11 @@ class SphinxClient:
 		return tag
 
 def AssertInt32 ( value ):
-	assert(isinstance(value, (int, long)))
+	assert(isinstance(value, int))
 	assert(value>=-2**32-1 and value<=2**32-1)
 
 def AssertUInt32 ( value ):
-	assert(isinstance(value, (int, long)))
+	assert(isinstance(value, int))
 	assert(value>=0 and value<=2**32-1)
 
 def SetBit ( flag, bit, on ):
