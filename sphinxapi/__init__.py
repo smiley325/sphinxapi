@@ -125,14 +125,14 @@ class SphinxClient:
 		self._mode			= SPH_MATCH_ALL					# query matching mode (default is SPH_MATCH_ALL)
 		self._weights		= []							# per-field weights (default is 1 for all fields)
 		self._sort			= SPH_SORT_RELEVANCE			# match sorting mode (default is SPH_SORT_RELEVANCE)
-		self._sortby		= ''							# attribute to sort by (defualt is "")
+		self._sortby		= b''							# attribute to sort by (defualt is "")
 		self._min_id		= 0								# min ID to match (default is 0)
 		self._max_id		= 0								# max ID to match (default is UINT_MAX)
 		self._filters		= []							# search filters
-		self._groupby		= ''							# group-by attribute name
+		self._groupby		= b''							# group-by attribute name
 		self._groupfunc		= SPH_GROUPBY_DAY				# group-by function (to pre-process group-by attribute value with)
-		self._groupsort		= '@group desc'					# group-by sorting clause (to sort groups in result set with)
-		self._groupdistinct	= ''							# group-by count-distinct attribute
+		self._groupsort		= b'@group desc'					# group-by sorting clause (to sort groups in result set with)
+		self._groupdistinct	= b''							# group-by count-distinct attribute
 		self._maxmatches	= 1000							# max matches to retrieve
 		self._cutoff		= 0								# cutoff to stop searching at
 		self._retrycount	= 0								# distributed retry count
@@ -140,15 +140,15 @@ class SphinxClient:
 		self._anchor		= {}							# geographical anchor point
 		self._indexweights	= {}							# per-index weights
 		self._ranker		= SPH_RANK_PROXIMITY_BM25		# ranking mode
-		self._rankexpr		= ''							# ranking expression for SPH_RANK_EXPR
+		self._rankexpr		= b''							# ranking expression for SPH_RANK_EXPR
 		self._maxquerytime	= 0						# max query time, milliseconds (default is 0, do not limit)
 		self._timeout = 1.0								# connection timeout
 		self._fieldweights	= {}							# per-field-name weights
 		self._overrides		= {}							# per-query attribute values overrides
-		self._select		= '*'								# select-list (attributes or expressions, with optional aliases)
+		self._select		= b'*'								# select-list (attributes or expressions, with optional aliases)
 		self._query_flags	= 0							# per-query various flags
 		self._predictedtime = 0							# per-query max_predicted_time
-		self._outerorderby = ''							# outer match sort by
+		self._outerorderby = b''							# outer match sort by
 		self._outeroffset = 0								# outer offset
 		self._outerlimit = 0								# outer limit
 		self._hasouter = False							# sub-select enabled
@@ -235,7 +235,7 @@ class SphinxClient:
 			self._error = 'connection to %s failed (%s)' % ( desc, msg )
 			return
 
-		v = unpack('>L', sock.recv(4))
+		v, = unpack('>L', sock.recv(4))
 		if v<1:
 			sock.close()
 			self._error = 'expected searchd protocol version, got %s' % v
@@ -251,7 +251,7 @@ class SphinxClient:
 		INTERNAL METHOD, DO NOT CALL. Gets and checks response packet from searchd server.
 		"""
 		(status, ver, length) = unpack('>2HL', sock.recv(8))
-		response = ''
+		response = b''
 		left = length
 		while left>0:
 			chunk = sock.recv(left)
@@ -572,7 +572,7 @@ class SphinxClient:
 		return results[0]
 
 
-	def AddQuery (self, query, index='*', comment=''):
+	def AddQuery (self, query, index=b'*', comment=b''):
 		"""
 		Add query to batch.
 		"""
@@ -588,7 +588,7 @@ class SphinxClient:
 
 		if isinstance(query,str):
 			query = query.encode('utf-8')
-		assert(isinstance(query,str))
+		assert(isinstance(query,bytes))
 
 		req.append(pack('>L', len(query)))
 		req.append(query)
@@ -596,7 +596,9 @@ class SphinxClient:
 		req.append(pack('>L', len(self._weights)))
 		for w in self._weights:
 			req.append(pack('>L', w))
-		assert(isinstance(index,str))
+		if isinstance(index, str):
+			index = index.encode('utf-8')
+		assert(isinstance(index,bytes))
 		req.append(pack('>L', len(index)))
 		req.append(index)
 		req.append(pack('>L',1)) # id64 range marker
@@ -653,7 +655,9 @@ class SphinxClient:
 			req.append ( pack ('>L',len(field)) + field + pack ('>L',weight) )
 
 		# comment
-		comment = str(comment)
+		if isinstance(comment, str):
+			comment = comment.encode('utf-8')
+		assert(isinstance(comment, bytes))
 		req.append ( pack('>L',len(comment)) + comment )
 
 		# attribute overrides
@@ -685,7 +689,7 @@ class SphinxClient:
 			req.append ( pack('>L', 0) )
 			
 		# send query, get response
-		req = ''.join(req)
+		req = b''.join(req)
 
 		self._reqs.append(req)
 		return
@@ -704,7 +708,7 @@ class SphinxClient:
 		if not sock:
 			return None
 
-		req = ''.join(self._reqs)
+		req = b''.join(self._reqs)
 		length = len(req)+8
 		req = pack('>HHLLL', SEARCHD_COMMAND_SEARCH, VER_COMMAND_SEARCH, length, 0, len(self._reqs))+req
 		self._Send ( sock, req )
