@@ -1,7 +1,11 @@
+## Python 3 version
+
+To the best of my knowledge this is the only version of `sphinxapi` which targets Python 3, amongst all other forks.
+
 ## Installation
 
 ```sh
-pip install https://github.com/Romamo/sphinxapi/zipball/master
+pip install https://github.com/smiley325/sphinxapi/zipball/master
 ```
 
 ## Using
